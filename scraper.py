@@ -4,7 +4,7 @@ import os
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-url = "https://gist.github.com/figassis/07221d9c51f413e30b78457f69666547"
+url = input("Enter Your URL to scrape: ")
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36"
