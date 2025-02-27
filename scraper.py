@@ -1,34 +1,60 @@
-import requests
-import re
 import os
-from bs4 import BeautifulSoup
-from datetime import datetime
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
-url = input("Enter Your URL to scrape: ")
+def setup_driver():
+    """Configures and returns a Selenium WebDriver with necessary options."""
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    return webdriver.Chrome(options=options)
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.85 Safari/537.36"
-}
+def create_data_folder():
+    """Creates a folder to store scraped data if it doesn't already exist."""
+    if not os.path.exists("data"):
+        os.makedirs("data")
 
-response = requests.get(url, headers=headers)
+def scrape_craigslist(base_url):
+    """Scrapes Craigslist car listings and saves them as HTML files."""
+    driver = setup_driver()
+    create_data_folder()
+    
+    file_counter = 1
+    page = 0
+    
+    while True:
+        url = f"{base_url}&s={page}"
+        print(f"Scraping: {url}")
+        driver.get(url)
+        
+        time.sleep(10)
+        
+        listings = driver.find_elements(By.CLASS_NAME, "gallery-card")
+        
+        if not listings:
+            print("No more listings found. Stopping scraper.")
+            break
+        
+        print(f"Found {len(listings)} cars on page {(page // 120) + 1}")
+        
+        for listing in listings:
+            html_content = listing.get_attribute("outerHTML")
+            file_path = f"data/craigslist_cars_{file_counter}.html"
+            
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(html_content)
+            
+            file_counter += 1
+        
+        page += 120
+        time.sleep(15)
+    
+    driver.quit()
+    print("✅ Scraping complete! Data saved in the 'data' folder.")
 
-if response.status_code == 200:
-    soup = BeautifulSoup(response.text, "html.parser")
-    text = soup.get_text()
-
-    phone_pattern = re.compile(r'\+?[0-9][0-9\-\.\(\)\s]{8,15}[0-9]')
-    phone_numbers = phone_pattern.findall(text)
-
-    folder_name = "data"
-    os.makedirs(folder_name, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    file_path = os.path.join(folder_name, f"numbers_{timestamp}.txt")
-
-    with open(file_path, "w", encoding="utf-8") as file:
-        for num in set(phone_numbers):
-            file.write(num + "\n")
-
-    print(f"Extracted Phone Numbers saved in: {file_path}")
-else:
-    print("Failed to fetch the website!")
+if __name__ == "__main__":
+    url_input = input("Enter Craigslist Cars & Trucks URL: ").strip()
+    scrape_craigslist(url_input)
