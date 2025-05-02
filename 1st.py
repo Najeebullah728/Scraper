@@ -56,5 +56,5 @@ def scrape_craigslist(base_url):
     print("✅ Scraping complete! Data saved in the 'data' folder.")
 
 if __name__ == "__main__":
-    url_input = "https://losangeles.craigslist.org/search/cta#search=2".strip()
+    url_input = input("Enter Your Url...").strip()
     scrape_craigslist(url_input)
